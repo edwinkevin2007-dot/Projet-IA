@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Publier une récolte — AgriMarketFlow AI{% endblock %}
+{% block content %}
+<h1 style="font-size:1.6rem;margin-bottom:24px;">Publier une récolte</h1>
+<div class="form-card" style="max-width:600px;">
+  <form method="POST" action="{{ url_for('nouvelle_recolte') }}" enctype="multipart/form-data">
+    <label for="libelle_produit">Produit</label>
+    <input type="text" id="libelle_produit" name="libelle_produit" required placeholder="Riz Vary">
+
+    <label for="quantite">Quantité (kg)</label>
+    <input type="number" step="any" id="quantite" name="quantite" required placeholder="500">
+
+    <label for="description">Description du produit</label>
+    {% if not ia_disponible %}
+      <div class="map-key-warning">
+        Assistant IA non configuré côté serveur (clé <span class="mono">GROQ_API_KEY</span> manquante) —
+        rédigez la description manuellement.
+      </div>
+    {% endif %}
+    <textarea id="description" name="description" rows="4"
+      placeholder="Qualité, fraîcheur, conditions de récolte, disponibilité pour enlèvement..."></textarea>
+    <div class="map-actions">
+      <button type="button" id="btn-ia-description" class="btn-outline" style="padding:6px 12px;font-size:0.8rem;border-radius:6px;" {% if not ia_disponible %}disabled{% endif %}>
+        ✨ Générer avec l'IA
+      </button>
+    </div>
+    <p class="field-hint" id="ia-status"></p>
+
+    <label>Photos du produit</label>
+    <input type="file" name="images" accept="image/png,image/jpeg,image/gif,image/webp" multiple>
+    <p class="field-hint">Formats acceptés : JPG, PNG, GIF, WEBP.</p>
+
+    <label>Vidéos du produit</label>
+    <input type="file" name="videos" accept="video/mp4,video/webm,video/quicktime" multiple>
+    <p class="field-hint">Formats acceptés : MP4, WEBM, MOV. Taille totale max. 50 Mo.</p>
+
+    <label>Localisation de la récolte</label>
+    {% if not google_maps_api_key %}
+      <div class="map-key-warning">
+        Clé API Google Maps non configurée — saisissez les coordonnées manuellement ci-dessous.
+      </div>
+    {% endif %}
+    <div class="map-actions"><button type="button" id="btn-locate-me" class="btn-outline" style="padding:4px 10px;font-size:0.78rem;border-radius:6px;">📍 Me localiser</button></div>
+    <div id="map-picker" class="map-box" data-lat-input="latitude" data-lon-input="longitude"></div>
+    <p class="field-hint">Pré-rempli avec votre localisation de compte — cliquez sur la carte pour ajuster.</p>
+
+    <div class="form-row">
+      <div>
+        <label for="latitude">Latitude</label>
+        <input type="number" step="any" id="latitude" name="latitude" required value="{{ user.latitude }}">
+      </div>
+      <div>
+        <label for="longitude">Longitude</label>
+        <input type="number" step="any" id="longitude" name="longitude" required value="{{ user.longitude }}">
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-laterite" style="margin-top:20px;width:100%;">Publier la récolte</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/maps.js') }}"></script>
+{% if google_maps_api_key %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initPickerMap&loading=async" async defer></script>
+{% endif %}
+<script>
+document.getElementById("btn-ia-description")?.addEventListener("click", async () => {
+  const libelle = document.getElementById("libelle_produit").value.trim();
+  const quantite = document.getElementById("quantite").value;
+  const statusEl = document.getElementById("ia-status");
+  const btn = document.getElementById("btn-ia-description");
+
+  if (!libelle) {
+    statusEl.textContent = "Indiquez d'abord le nom du produit.";
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.textContent = "Génération en cours...";
+
+  try {
+    const res = await fetch("{{ url_for('api_generer_description') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ libelle_produit: libelle, quantite: quantite, mots_cles: "" }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById("description").value = data.description;
+      statusEl.textContent = "Description générée — modifiable avant publication.";
+    } else {
+      statusEl.textContent = data.erreur || "Erreur lors de la génération.";
+    }
+  } catch (e) {
+    statusEl.textContent = "Impossible de contacter le service IA.";
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+{% endblock %}

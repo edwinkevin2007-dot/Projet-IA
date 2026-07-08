@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{{ recolte.libelle_produit }} — AgriMarketFlow AI{% endblock %}
+{% block content %}
+
+<div class="section-title">
+  <h2>{{ recolte.libelle_produit }} · {{ recolte.quantite }} kg</h2>
+  <span class="statut-pill statut-{{ recolte.statut|lower|replace('é','e')|replace(' ', '-') }}">{{ recolte.statut }}</span>
+</div>
+<p class="field-hint" style="margin-bottom:32px;">
+  Localisation : <span class="coord">{{ "%.4f"|format(recolte.latitude_origine) }}, {{ "%.4f"|format(recolte.longitude_origine) }}</span>
+  · Publiée le {{ recolte.date_publication }}
+</p>
+
+{% if est_proprietaire %}
+<div class="section-title"><h2 style="font-size:1.15rem;">Offres reçues</h2><span class="count-chip">{{ offres|length }}</span></div>
+
+{% if offres %}
+<div class="card-list" style="margin-bottom:40px;">
+  {% for o in offres %}
+  <div class="offre-card">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="rank-badge {% if loop.index == 1 %}rank-1{% endif %}">{{ loop.index }}</div>
+      <div>
+        <div class="titre">{{ o.nom_complet }} <span class="field-hint">({{ o.type_profil }})</span></div>
+        <div class="meta">
+          {{ o.prix_propose }} Ar proposé · {{ o.distance_km }} km ·
+          {% if o.est_disponible %}<span class="dot on"></span> disponible{% else %}<span class="dot off"></span> indisponible{% endif %}
+          · <span class="statut-pill statut-{{ o.statut|lower|replace('é','e') }}">{{ o.statut }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="score-block">
+      <div class="score-value">{{ o.score }}<small>SCORE /100</small></div>
+      <div class="score-bars">
+        <div class="score-bar-row">
+          <span class="score-bar-label">PX</span>
+          <div class="score-bar-track"><div class="score-bar-fill prix" style="width:{{ o.detail.prix }}%;"></div></div>
+        </div>
+        <div class="score-bar-row">
+          <span class="score-bar-label">DS</span>
+          <div class="score-bar-track"><div class="score-bar-fill distance" style="width:{{ o.detail.distance }}%;"></div></div>
+        </div>
+        <div class="score-bar-row">
+          <span class="score-bar-label">DP</span>
+          <div class="score-bar-track"><div class="score-bar-fill dispo" style="width:{{ o.detail.disponibilite }}%;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    {% if o.statut == 'En attente' and recolte.statut == 'En attente' %}
+    <form method="POST" action="{{ url_for('valider_offre', offre_id=o.id_offre) }}">
+      <button type="submit" class="btn btn-laterite">Valider cette offre</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" style="margin-bottom:40px;">Aucune offre reçue pour l'instant.</div>
+{% endif %}
+{% endif %}
+
+{% if recolte.description %}
+<p style="max-width:640px;color:var(--encre);margin-bottom:20px;">{{ recolte.description }}</p>
+{% endif %}
+
+{% if images or videos %}
+<div class="media-gallery">
+  {% for img in images %}
+    <img src="{{ url_for('static', filename=img.chemin) }}" alt="{{ recolte.libelle_produit }}" class="media-thumb">
+  {% endfor %}
+  {% for vid in videos %}
+    <video src="{{ url_for('static', filename=vid.chemin) }}" class="media-thumb" controls></video>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="section-title"><h2 style="font-size:1.15rem;">Carte de proximité</h2></div>
+{% if not google_maps_api_key %}
+  <div class="map-key-warning">Clé API Google Maps non configurée — la carte interactive n'est pas disponible (voir README).</div>
+{% endif %}
+<div id="map-recolte" class="map-box map-large" data-payload='{{ map_payload|tojson }}' style="margin-bottom:32px;"></div>
+
+<div class="section-title"><h2 style="font-size:1.15rem;">Prestataires suggérés à proximité</h2><span class="count-chip">{{ suggestions|length }}</span></div>
+{% if suggestions %}
+<div class="card-list">
+  {% for s in suggestions %}
+  <div class="suggestion-card">
+    <div>
+      <div class="titre">{{ s.nom_complet }} <span class="field-hint">({{ s.type_profil }})</span></div>
+      <div class="meta">{{ s.distance_km }} km · {% if s.est_disponible %}<span class="dot on"></span> disponible{% else %}<span class="dot off"></span> indisponible{% endif %}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">Aucun prestataire trouvé dans un rayon de proximité.</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/maps.js') }}"></script>
+{% if google_maps_api_key %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initRecolteMap&loading=async" async defer></script>
+{% endif %}
+{% endblock %}
