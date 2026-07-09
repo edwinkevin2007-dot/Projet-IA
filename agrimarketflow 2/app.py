@@ -520,6 +520,95 @@ def api_suggestions(recolte_id):
     conn.close()
     return jsonify(prestataires_proches(recolte, prestataires))
 
+# ---------------------------------------------------------------------------- #
+# Suppression de compte:
+# ---------------------------------------------------------------------------- #
+
+from flask import render_template, redirect, url_for, flash, request
+from werkzeug.security import check_password_hash
+# (garde les imports existants)
+
+@app.route("/supprimer_compte", methods=["GET", "POST"])
+@login_required
+def supprimer_compte():
+    user_id = session["user_id"]
+
+    if request.method == "GET":
+        return render_template("supprimer_compte.html")
+
+    password = request.form.get("password", "")
+
+    conn = get_connection()
+
+    user = conn.execute(
+        "SELECT id_utilisateur, mot_de_passe FROM UTILISATEUR WHERE id_utilisateur = ?",
+        (user_id,)
+    ).fetchone()
+
+    if not user or not check_password_hash(user["mot_de_passe"], password):
+        flash("Mot de passe incorrect.", "danger")
+        conn.close()
+        return redirect(url_for("supprimer_compte"))
+
+    # 1) TRANSACTION liées (via OFFRE OU via RECOLTE)
+    conn.execute(
+        """
+        DELETE FROM "TRANSACTION"
+        WHERE id_offre IN (
+            SELECT id_offre FROM OFFRE WHERE id_utilisateur_prestataire = ?
+        )
+        OR id_recolte IN (
+            SELECT id_recolte FROM RECOLTE WHERE id_utilisateur_producteur = ?
+        )
+        """,
+        (user_id, user_id)
+    )
+
+    # 2) OFFRE liées (via prestataire OU via récoltes du producteur)
+    conn.execute(
+        """
+        DELETE FROM OFFRE
+        WHERE id_utilisateur_prestataire = ?
+        OR id_recolte IN (
+            SELECT id_recolte FROM RECOLTE WHERE id_utilisateur_producteur = ?
+        )
+        """,
+        (user_id, user_id)
+    )
+
+    # 3) RECOLTE_MEDIA liées aux récoltes du producteur
+    conn.execute(
+        """
+        DELETE FROM RECOLTE_MEDIA
+        WHERE id_recolte IN (
+            SELECT id_recolte FROM RECOLTE WHERE id_utilisateur_producteur = ?
+        )
+        """,
+        (user_id,)
+    )
+
+    # 4) RECOLTE du producteur
+    conn.execute(
+        "DELETE FROM RECOLTE WHERE id_utilisateur_producteur = ?",
+        (user_id,)
+    )
+
+    # 5) UTILISATEUR
+    conn.execute(
+        "DELETE FROM UTILISATEUR WHERE id_utilisateur = ?",
+        (user_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    session.clear()
+    flash("Votre compte a été supprimé.", "success")
+    return redirect(url_for("accueil"))
+
+if __name__ == "__main__":
+    init_db()
+    app.run(debug=True, port=5000)
 
 if __name__ == "__main__":
     init_db()
