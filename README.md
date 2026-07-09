@@ -1,2 +1,2 @@
-# Projet-De-Fin-D-ann-e
+# Projet IA
 Développement d'une application intelligente en Python de mise en relation dans la chaîne agricole à Madagascar.
