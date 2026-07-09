@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}AgriMarketFlow AI — Connecter la récolte au marché{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="eyebrow">Sujet 7 · Chaîne agricole, Madagascar</div>
+  <h1>De la rizière au camion, en un scoring.</h1>
+  <p>
+    AgriMarketFlow AI relie producteurs, collecteurs et transporteurs par géolocalisation.
+    Publiez une récolte, recevez des offres, et laissez le moteur de recommandation
+    classer les meilleures propositions selon le prix, la distance et la disponibilité.
+  </p>
+  <div class="cta-row">
+    {% if not current_user %}
+      <a href="{{ url_for('inscription') }}" class="btn btn-laterite">Créer un compte</a>
+      <a href="{{ url_for('connexion') }}" class="btn btn-outline">Se connecter</a>
+    {% elif current_user.type_profil == 'Producteur' %}
+      <a href="{{ url_for('nouvelle_recolte') }}" class="btn btn-laterite">Publier une récolte</a>
+    {% else %}
+      <a href="{{ url_for('prestataire_dashboard') }}" class="btn btn-laterite">Voir les récoltes à proximité</a>
+    {% endif %}
+  </div>
+
+  <div class="acteurs-grid">
+    <div class="acteur-card">
+      <div class="num">01</div>
+      <h3>Producteur</h3>
+      <p>Publie une récolte (produit, quantité, localisation), reçoit des offres et valide la meilleure.</p>
+    </div>
+    <div class="acteur-card">
+      <div class="num">02</div>
+      <h3>Collecteur</h3>
+      <p>Notifié des récoltes proches, formule une offre d'achat et récupère la marchandise.</p>
+    </div>
+    <div class="acteur-card">
+      <div class="num">03</div>
+      <h3>Transporteur</h3>
+      <p>Notifié des besoins d'acheminement, propose ses services et assure la logistique.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}
