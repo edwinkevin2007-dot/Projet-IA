@@ -20,7 +20,51 @@ TIMEOUT_SECONDES = 15
 
 
 def ia_disponible():
+    """Vrai si une clé est CONFIGURÉE. Ne garantit pas qu'elle est valide (voir tester_cle())."""
     return bool(GROQ_API_KEY)
+
+
+def tester_cle():
+    """
+    Fonctionnalité "Diagnostic IA".
+    Fait un appel minimal (1 token) à l'API Groq pour vérifier que la clé fonctionne
+    réellement : authentification acceptée, quota disponible, réseau sortant OK.
+
+    Retourne un dict :
+      {"statut": "ok", "modele": "..."}
+      {"statut": "absente", "message": "..."}
+      {"statut": "invalide", "message": "..."}   -> clé rejetée (401/403)
+      {"statut": "quota_depasse", "message": "..."} -> clé valide mais 429
+      {"statut": "erreur_reseau", "message": "..."} -> timeout / pas de connexion sortante
+    """
+    if not GROQ_API_KEY:
+        return {"statut": "absente", "message": "Aucune clé GROQ_API_KEY définie sur le serveur."}
+
+    try:
+        response = requests.post(
+            GROQ_URL,
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": GROQ_MODEL,
+                "messages": [{"role": "user", "content": "Réponds uniquement : OK"}],
+                "max_tokens": 5,
+            },
+            timeout=10,
+        )
+        if response.status_code == 200:
+            return {"statut": "ok", "modele": GROQ_MODEL}
+        if response.status_code in (401, 403):
+            return {"statut": "invalide", "message": "Clé refusée par Groq (invalide, expirée ou mal copiée)."}
+        if response.status_code == 429:
+            return {"statut": "quota_depasse", "message": "Clé valide, mais quota gratuit dépassé pour le moment."}
+        return {"statut": "erreur_reseau", "message": f"Réponse inattendue de Groq (HTTP {response.status_code})."}
+    except requests.exceptions.Timeout:
+        return {"statut": "erreur_reseau", "message": "Délai dépassé — pas de connexion sortante depuis le serveur ?"}
+    except requests.exceptions.RequestException as exc:
+        return {"statut": "erreur_reseau", "message": f"Impossible de contacter Groq : {exc}"}
 
 
 def generer_description(libelle_produit, quantite, mots_cles=""):

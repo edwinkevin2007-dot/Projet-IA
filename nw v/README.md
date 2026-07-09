@@ -140,7 +140,30 @@ une description commerciale à partir du nom du produit et de la quantité, via 
 de [Groq](https://console.groq.com) (modèles Llama, inférence très rapide, aucune carte
 bancaire requise).
 
-### Configuration de la clé Groq
+### Vérifier que la clé fonctionne vraiment
+
+Avoir `GROQ_API_KEY` définie ne garantit pas qu'elle est valide (faute de frappe, clé expirée,
+quota dépassé...). Deux façons de vérifier :
+
+1. **Depuis l'application** : page **Assistant IA** → bouton **"🔧 Tester la connexion à l'IA"**.
+   Il fait un appel réel minimal à Groq et affiche le résultat exact : clé absente, invalide,
+   quota dépassé, ou fonctionnelle (avec le nom du modèle). Logique dans `ia.tester_cle()`,
+   exposée via `GET /api/ia/diagnostic`.
+
+2. **Depuis le terminal**, avant même de lancer l'application :
+
+```bash
+curl https://api.groq.com/openai/v1/chat/completions \
+  -H "Authorization: Bearer VOTRE_CLE" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"llama-3.1-8b-instant","messages":[{"role":"user","content":"dis OK"}],"max_tokens":5}'
+```
+   - `200` + un JSON avec `choices` → la clé fonctionne.
+   - `401 Unauthorized` → clé invalide ou mal copiée.
+   - `429 Too Many Requests` → clé valide, quota gratuit dépassé.
+   - Timeout / connexion refusée → pas de réseau sortant depuis la machine.
+
+## Configuration de la clé Groq
 
 1. Créez un compte gratuit sur [console.groq.com](https://console.groq.com) et générez une clé API.
 2. Définissez-la en variable d'environnement :

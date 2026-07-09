@@ -325,6 +325,8 @@ table.offres-table th { color: var(--encre-douce); font-weight: 600; font-size: 
 .map-pin-dispo { background: var(--vert-moyen); width: 14px; height: 14px; }
 .map-pin-indispo { background: var(--danger); width: 14px; height: 14px; }
 
+.diagnostic-box { margin-bottom: 20px; display: flex; align-items: center; }
+
 .ia-avis {
   background: linear-gradient(135deg, #EFF6F1, #FBF3E4);
   border: 1px solid var(--ligne);

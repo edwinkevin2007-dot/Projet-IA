@@ -495,6 +495,12 @@ def assistant_ia():
     )
 
 
+@app.route("/api/ia/diagnostic")
+@login_required
+def api_diagnostic_ia():
+    return jsonify(ia.tester_cle())
+
+
 # --------------------------------------------------------------------------- #
 # API REST (bonus : consommable par un client externe / bibliothèque requests)
 # --------------------------------------------------------------------------- #
