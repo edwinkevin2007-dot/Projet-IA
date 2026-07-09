@@ -14,15 +14,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 from database import get_connection, init_db
-from scoring import distance_km, prestataires_proches, calculer_scores
+from scoring import distance_km, prestataires_proches, calculer_scores, meilleurs_partenaires
 import ia
+import email_verif
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key-change-in-production"
-
-# Clé API Google Maps : à définir en variable d'environnement, jamais en dur dans le code.
-#   export GOOGLE_MAPS_API_KEY="votre-cle"
-app.config["GOOGLE_MAPS_API_KEY"] = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 
 # Upload des photos/vidéos de récolte
 UPLOAD_FOLDER = os.path.join(app.static_folder, "uploads")
@@ -115,11 +112,6 @@ def inject_user():
 
 
 @app.context_processor
-def inject_maps_key():
-    return {"google_maps_api_key": app.config["GOOGLE_MAPS_API_KEY"]}
-
-
-@app.context_processor
 def inject_ia_status():
     return {"ia_disponible": ia.ia_disponible()}
 
@@ -151,6 +143,19 @@ def inscription():
             flash("Un compte existe déjà avec ce contact.", "danger")
             conn.close()
             return redirect(url_for("inscription"))
+
+        if email_verif.ressemble_a_un_email(contact):
+            valide, message = email_verif.verifier_email(contact)
+            if not valide:
+                flash(message, "danger")
+                conn.close()
+                return redirect(url_for("inscription"))
+            if message == "verification_impossible":
+                flash(
+                    "Le domaine de l'email n'a pas pu être vérifié (pas de connexion sortante) — "
+                    "compte créé quand même.",
+                    "warning",
+                )
 
         conn.execute(
             "INSERT INTO UTILISATEUR (nom_complet, contact, mot_de_passe, type_profil, "
@@ -465,6 +470,29 @@ def soumettre_offre(recolte_id):
     conn.close()
     flash("Offre envoyée au producteur.", "success")
     return redirect(url_for("prestataire_dashboard"))
+
+
+@app.route("/assistant")
+@login_required
+def assistant_ia():
+    user = current_user()
+    conn = get_connection()
+    tous = conn.execute(
+        "SELECT * FROM UTILISATEUR WHERE id_utilisateur != ?", (user["id_utilisateur"],)
+    ).fetchall()
+    conn.close()
+
+    partenaires = meilleurs_partenaires(user, tous)
+
+    avis_ia, erreur_ia = (None, None)
+    if request.args.get("generer") == "1":
+        avis_ia, erreur_ia = ia.generer_avis_partenaires(
+            user["nom_complet"], user["type_profil"], partenaires
+        )
+
+    return render_template(
+        "assistant.html", partenaires=partenaires, avis_ia=avis_ia, erreur_ia=erreur_ia, user=user
+    )
 
 
 # --------------------------------------------------------------------------- #

@@ -70,3 +70,63 @@ def generer_description(libelle_produit, quantite, mots_cles=""):
         return None, f"Erreur lors de l'appel à l'IA : {exc}"
     except (KeyError, IndexError, ValueError):
         return None, "Réponse inattendue de l'API IA."
+
+
+def generer_avis_partenaires(nom_utilisateur, role_utilisateur, partenaires):
+    """
+    Fonctionnalité "Agent IA de mise en relation".
+    À partir du classement déterministe calculé par scoring.meilleurs_partenaires(),
+    demande à l'IA de rédiger un court avis (2-4 phrases) expliquant, en français,
+    pourquoi contacter les meilleurs partenaires suggérés.
+
+    Retourne (avis: str, erreur: str|None).
+    """
+    if not ia_disponible():
+        return None, "Aucune clé GROQ_API_KEY configurée sur le serveur."
+
+    lignes = []
+    for role, liste in partenaires.items():
+        if not liste:
+            lignes.append(f"- Aucun {role.lower()} disponible à proximité pour le moment.")
+            continue
+        for c in liste[:3]:
+            dispo = "disponible" if c.get("est_disponible") else "indisponible"
+            lignes.append(f"- {role} : {c['nom_complet']}, à {c['distance_km']} km, {dispo}.")
+
+    prompt = (
+        f"Un utilisateur nommé {nom_utilisateur}, de profil {role_utilisateur}, "
+        "utilise une application de mise en relation agricole à Madagascar.\n"
+        "Voici les partenaires potentiels détectés automatiquement par le système "
+        "(triés par disponibilité puis proximité) :\n"
+        + "\n".join(lignes)
+        + "\n\nRédige un avis court (4 phrases maximum, en français, sans markdown, sans emoji) "
+          "recommandant avec qui entrer en contact en priorité et pourquoi, "
+          "en te basant uniquement sur la disponibilité et la distance indiquées."
+    )
+
+    try:
+        response = requests.post(
+            GROQ_URL,
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": GROQ_MODEL,
+                "messages": [
+                    {"role": "system", "content": "Tu es l'agent IA d'AgriMarketFlow, tu aides producteurs, collecteurs et transporteurs malgaches à choisir avec qui collaborer."},
+                    {"role": "user", "content": prompt},
+                ],
+                "temperature": 0.5,
+                "max_tokens": 220,
+            },
+            timeout=TIMEOUT_SECONDES,
+        )
+        response.raise_for_status()
+        data = response.json()
+        texte = data["choices"][0]["message"]["content"].strip()
+        return texte, None
+    except requests.exceptions.RequestException as exc:
+        return None, f"Erreur lors de l'appel à l'IA : {exc}"
+    except (KeyError, IndexError, ValueError):
+        return None, "Réponse inattendue de l'API IA."

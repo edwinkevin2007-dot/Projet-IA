@@ -35,14 +35,9 @@
     <p class="field-hint">Formats acceptés : MP4, WEBM, MOV. Taille totale max. 50 Mo.</p>
 
     <label>Localisation de la récolte</label>
-    {% if not google_maps_api_key %}
-      <div class="map-key-warning">
-        Clé API Google Maps non configurée — saisissez les coordonnées manuellement ci-dessous.
-      </div>
-    {% endif %}
     <div class="map-actions"><button type="button" id="btn-locate-me" class="btn-outline" style="padding:4px 10px;font-size:0.78rem;border-radius:6px;">📍 Me localiser</button></div>
     <div id="map-picker" class="map-box" data-lat-input="latitude" data-lon-input="longitude"></div>
-    <p class="field-hint">Pré-rempli avec votre localisation de compte — cliquez sur la carte pour ajuster.</p>
+    <p class="field-hint">Pré-rempli avec votre localisation de compte — cliquez sur la carte OpenStreetMap pour ajuster.</p>
 
     <div class="form-row">
       <div>
@@ -62,9 +57,7 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/maps.js') }}"></script>
-{% if google_maps_api_key %}
-<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initPickerMap&loading=async" async defer></script>
-{% endif %}
+<script>initPickerMap();</script>
 <script>
 document.getElementById("btn-ia-description")?.addEventListener("click", async () => {
   const libelle = document.getElementById("libelle_produit").value.trim();

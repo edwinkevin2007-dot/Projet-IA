@@ -77,9 +77,6 @@
 {% endif %}
 
 <div class="section-title"><h2 style="font-size:1.15rem;">Carte de proximité</h2></div>
-{% if not google_maps_api_key %}
-  <div class="map-key-warning">Clé API Google Maps non configurée — la carte interactive n'est pas disponible (voir README).</div>
-{% endif %}
 <div id="map-recolte" class="map-box map-large" data-payload='{{ map_payload|tojson }}' style="margin-bottom:32px;"></div>
 
 <div class="section-title"><h2 style="font-size:1.15rem;">Prestataires suggérés à proximité</h2><span class="count-chip">{{ suggestions|length }}</span></div>
@@ -102,7 +99,5 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/maps.js') }}"></script>
-{% if google_maps_api_key %}
-<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initRecolteMap&loading=async" async defer></script>
-{% endif %}
+<script>initRecolteMap();</script>
 {% endblock %}

@@ -36,12 +36,13 @@ agrimarketflow/
 ├── app.py            # Routes Flask, authentification, logique métier, uploads
 ├── database.py        # Schéma SQLite (MLD) + connexion + données de démo
 ├── scoring.py          # Distance Haversine + moteur de scoring multicritère
-├── ia.py                # Intégration API IA gratuite (Groq) pour la description produit
+├── ia.py                # Intégration API IA gratuite (Groq) : description + agent de mise en relation
+├── email_verif.py        # Vérification du domaine email (sans dépendance)
 ├── requirements.txt
 ├── templates/           # Vues Jinja2
 └── static/
     ├── style.css          # Identité visuelle
-    ├── js/maps.js          # Sélecteur de position + carte de matching (Google Maps)
+    ├── js/maps.js          # Sélecteur de position + carte de matching (Leaflet / OpenStreetMap)
     └── uploads/             # Photos/vidéos des récoltes (créé automatiquement)
 ```
 
@@ -72,6 +73,54 @@ agrimarketflow/
 Le schéma SQLite dans `database.py` reprend fidèlement le MLD du cahier des charges :
 `UTILISATEUR`, `RECOLTE`, `OFFRE`, `TRANSACTION`, avec les clés étrangères et contraintes
 `CHECK` correspondant aux énumérations (`type_profil`, `statut`, etc.).
+
+## Cartographie — OpenStreetMap (Leaflet)
+
+L'application utilise **Leaflet** avec des tuiles **OpenStreetMap** : entièrement gratuit,
+sans clé API, sans compte à créer, sans quota. Utilisé pour :
+
+- **Choisir une position** en cliquant sur la carte ou en glissant le repère, sur les pages
+  d'inscription et de publication de récolte (avec un bouton "Me localiser" via la géolocalisation
+  du navigateur) ;
+- **Visualiser la récolte et les prestataires suggérés** sur une carte, sur la page de détail
+  d'une récolte (marqueur rouge = récolte, marqueurs verts/rouges = prestataires disponibles/
+  indisponibles, avec distance et score au clic).
+
+Aucune configuration n'est nécessaire — la carte fonctionne dès le lancement de l'application
+(connexion internet requise côté navigateur pour charger les tuiles OpenStreetMap, comme pour
+n'importe quelle carte web).
+
+La logique des cartes est centralisée dans `static/js/maps.js` (`initPickerMap` pour la sélection
+de position, `initRecolteMap` pour la carte de matching).
+
+## Vérification réelle de l'email à l'inscription
+
+À l'inscription, si le contact ressemble à un email, l'application vérifie que **le domaine
+existe réellement** (résolution DNS, ex. gmail.com, yahoo.fr...) avant de créer le compte —
+sans dépendance externe, sans clé API, gratuit (`email_verif.py`).
+
+**Portée honnête de cette vérification** : elle confirme que le domaine peut recevoir des
+emails, mais ne confirme pas qu'une boîte précise existe chez Google/Yahoo/etc. — cela
+nécessiterait un handshake SMTP direct que ces fournisseurs bloquent systématiquement pour
+lutter contre le spam. C'est le même niveau de vérification gratuite utilisé par la plupart
+des frameworks web (Django, Rails...). Si la résolution DNS échoue faute de connexion
+sortante sur le serveur, l'inscription n'est pas bloquée à tort : un avertissement s'affiche
+et le compte est créé quand même.
+
+## Agent IA de mise en relation entre utilisateurs
+
+La page **Assistant IA** (accessible depuis le menu, pour tout utilisateur connecté) agit comme
+un agent qui met les acteurs en relation :
+
+- **Producteur** → l'agent suggère les meilleurs **collecteurs** et **transporteurs** à proximité.
+- **Collecteur** → l'agent suggère les meilleurs **producteurs** et **transporteurs** à proximité.
+- **Transporteur** → l'agent suggère les meilleurs **producteurs** et **collecteurs** à proximité.
+
+Le classement (`scoring.meilleurs_partenaires()`) est déterministe : disponibilité en priorité,
+puis distance (Haversine). Un bouton **"Demander l'avis de l'agent IA"** appelle ensuite l'API
+gratuite Groq pour rédiger, en langage naturel, une courte recommandation expliquant avec qui
+entrer en contact en priorité et pourquoi (`ia.generer_avis_partenaires()`). Chaque partenaire
+suggéré est directement contactable (email ou téléphone) en un clic.
 
 ## Médias et description produit
 
@@ -108,40 +157,12 @@ La logique d'appel est isolée dans `ia.py` (`generer_description()`), volontair
 du reste du code pour pouvoir être remplacée par un autre fournisseur gratuit
 (Hugging Face Inference API, Google Gemini free tier, etc.) sans toucher aux routes Flask.
 
-## Cartographie — API Google Maps
-
-L'application utilise l'API **Google Maps JavaScript** (au lieu de Folium/OpenStreetMap
-mentionné en piste technique) pour :
-
-- **Choisir une position** en cliquant sur la carte ou en glissant le repère, sur les pages
-  d'inscription et de publication de récolte (avec un bouton "Me localiser" via la géolocalisation
-  du navigateur) ;
-- **Visualiser la récolte et les prestataires suggérés** sur une carte, sur la page de détail
-  d'une récolte (marqueur rouge = récolte, marqueurs verts/rouges = prestataires disponibles/indisponibles,
-  avec distance et score au clic).
-
-### Configuration de la clé API
-
-1. Créez une clé sur [Google Cloud Console](https://console.cloud.google.com/google/maps-apis),
-   avec l'API **Maps JavaScript API** activée.
-2. Restreignez-la (référents HTTP) à votre domaine / `localhost` en développement.
-3. Définissez-la en variable d'environnement avant de lancer l'application :
-
-```bash
-export GOOGLE_MAPS_API_KEY="votre-cle-api"
-python3 app.py
-```
-
-Sans clé configurée, l'application reste pleinement fonctionnelle : les cartes sont simplement
-remplacées par un message d'avertissement, et les coordonnées se saisissent à la main dans les
-champs latitude/longitude.
-
-La logique des cartes est centralisée dans `static/js/maps.js` (`initPickerMap` pour la sélection
-de position, `initRecolteMap` pour la carte de matching).
-
 ## Limites du prototype
 
 - Authentification simple par session Flask (à durcir pour une mise en production : CSRF,
   HTTPS, limitation de tentatives, etc.).
-- La clé Google Maps est injectée côté client (normal pour l'API JS Maps) : pensez à la
-  restreindre par domaine/référent dans la console Google Cloud.
+- La vérification email confirme l'existence du domaine, pas d'une boîte mail précise
+  (voir explication détaillée plus haut).
+- L'agent IA (Groq) est optionnel : sans clé, l'application reste pleinement fonctionnelle,
+  seule la rédaction en langage naturel n'est pas disponible (le classement déterministe l'est
+  toujours).

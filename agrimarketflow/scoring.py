@@ -17,6 +17,36 @@ POIDS = {
 RAYON_TERRE_KM = 6371.0
 RAYON_SUGGESTION_KM = 100  # rayon de "proximité" pour le matching automatique
 
+# Pour chaque profil, quels sont les profils "partenaires" que l'agent IA doit suggérer.
+ROLES_PARTENAIRES = {
+    "Producteur": ("Collecteur", "Transporteur"),
+    "Collecteur": ("Producteur", "Transporteur"),
+    "Transporteur": ("Producteur", "Collecteur"),
+}
+
+
+def meilleurs_partenaires(utilisateur, tous_utilisateurs, top_n=3):
+    """
+    Fonctionnalité "Agent IA de mise en relation".
+    Pour un utilisateur donné, calcule les meilleurs partenaires de chaque profil
+    complémentaire (cf. ROLES_PARTENAIRES), triés par disponibilité puis distance.
+    Retourne un dict {role: [partenaires...]}.
+    """
+    resultats = {}
+    for role in ROLES_PARTENAIRES.get(utilisateur["type_profil"], ()):
+        candidats = []
+        for u in tous_utilisateurs:
+            if u["type_profil"] != role or u["id_utilisateur"] == utilisateur["id_utilisateur"]:
+                continue
+            d = distance_km(
+                utilisateur["latitude"], utilisateur["longitude"],
+                u["latitude"], u["longitude"],
+            )
+            candidats.append({**dict(u), "distance_km": round(d, 2)})
+        candidats.sort(key=lambda c: (0 if c["est_disponible"] else 1, c["distance_km"]))
+        resultats[role] = candidats[:top_n]
+    return resultats
+
 
 def distance_km(lat1, lon1, lat2, lon2):
     """Distance orthodromique (grand cercle) entre deux points GPS, en km."""

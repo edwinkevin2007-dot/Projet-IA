@@ -21,15 +21,9 @@
     <input type="password" id="mot_de_passe" name="mot_de_passe" required minlength="6">
 
     <label>Votre position</label>
-    {% if not google_maps_api_key %}
-      <div class="map-key-warning">
-        Clé API Google Maps non configurée — saisissez vos coordonnées manuellement ci-dessous.
-        (Voir README pour activer la carte interactive.)
-      </div>
-    {% endif %}
     <div class="map-actions"><button type="button" id="btn-locate-me" class="btn-outline" style="padding:4px 10px;font-size:0.78rem;border-radius:6px;">📍 Me localiser</button></div>
     <div id="map-picker" class="map-box" data-lat-input="latitude" data-lon-input="longitude"></div>
-    <p class="field-hint">Cliquez sur la carte ou faites glisser le repère pour définir votre position. Utilisée pour le matching de proximité.</p>
+    <p class="field-hint">Cliquez sur la carte (OpenStreetMap) ou faites glisser le repère pour définir votre position. Utilisée pour le matching de proximité.</p>
 
     <div class="form-row">
       <div>
@@ -49,7 +43,5 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/maps.js') }}"></script>
-{% if google_maps_api_key %}
-<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initPickerMap&loading=async" async defer></script>
-{% endif %}
+<script>initPickerMap();</script>
 {% endblock %}
