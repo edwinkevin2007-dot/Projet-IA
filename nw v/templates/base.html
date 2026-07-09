@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}AgriMarketFlow AI{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="{{ url_for('accueil') }}">
+    <span class="brand-mark">◆</span> AgriMarket<span class="brand-accent">Flow</span>
+  </a>
+  <nav>
+    {% if current_user %}
+      {% if current_user.type_profil == 'Producteur' %}
+        <a href="{{ url_for('producteur_dashboard') }}">Mes récoltes</a>
+        <a href="{{ url_for('nouvelle_recolte') }}">Publier une récolte</a>
+      {% else %}
+        <a href="{{ url_for('prestataire_dashboard') }}">Récoltes à proximité</a>
+      {% endif %}
+      <a href="{{ url_for('assistant_ia') }}">Assistant IA</a>
+      <span class="nav-user">{{ current_user.nom_complet }} · {{ current_user.type_profil }}</span>
+      <a href="{{ url_for('deconnexion') }}" class="btn-ghost">Déconnexion</a>
+    {% else %}
+      <a href="{{ url_for('connexion') }}">Connexion</a>
+      <a href="{{ url_for('inscription') }}" class="btn-ghost">Créer un compte</a>
+    {% endif %}
+  </nav>
+</header>
+
+<main class="page">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  Prototype pédagogique — AgriMarketFlow AI · Sujet 7 · Madagascar
+</footer>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

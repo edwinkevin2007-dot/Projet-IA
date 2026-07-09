@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Récoltes à proximité — AgriMarketFlow AI{% endblock %}
+{% block content %}
+
+<div class="availability-toggle">
+  {% if user.est_disponible %}
+    <span class="dot on"></span> Vous êtes marqué(e) <strong>disponible</strong>
+  {% else %}
+    <span class="dot off"></span> Vous êtes marqué(e) <strong>indisponible</strong>
+  {% endif %}
+  <form method="POST" action="{{ url_for('toggle_disponibilite') }}">
+    <button type="submit" class="btn btn-outline" style="padding:4px 12px;font-size:0.8rem;">Changer</button>
+  </form>
+</div>
+
+<div class="section-title">
+  <h2>Récoltes à proximité</h2>
+  <span class="count-chip">{{ recoltes_proches|length }} suggérées</span>
+</div>
+
+{% if recoltes_proches %}
+<div class="card-list" style="margin-bottom:48px;">
+  {% for r in recoltes_proches %}
+  <div class="recolte-card">
+    <div style="display:flex;align-items:center;gap:14px;">
+      {% if r.vignette %}
+        <img src="{{ url_for('static', filename=r.vignette) }}" class="card-thumb" alt="">
+      {% else %}
+        <div class="card-thumb card-thumb-empty">🌾</div>
+      {% endif %}
+      <div>
+        <div class="titre">{{ r.libelle_produit }} — {{ r.quantite }} kg</div>
+        <div class="meta">{{ r.distance_km }} km de vous · publiée le {{ r.date_publication }}</div>
+      </div>
+    </div>
+    <form class="inline-form" method="POST" action="{{ url_for('soumettre_offre', recolte_id=r.id_recolte) }}">
+      <input type="number" step="any" name="prix_propose" placeholder="Prix (Ar)" required>
+      <button type="submit" class="btn btn-laterite">Faire une offre</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" style="margin-bottom:48px;">Aucune récolte disponible dans votre rayon pour le moment.</div>
+{% endif %}
+
+<div class="section-title"><h2>Mes offres</h2></div>
+{% if mes_offres %}
+<table class="offres-table">
+  <thead><tr><th>Récolte</th><th>Prix proposé</th><th>Score</th><th>Statut</th></tr></thead>
+  <tbody>
+    {% for o in mes_offres %}
+    <tr>
+      <td>{{ o.libelle_produit }}</td>
+      <td class="mono">{{ o.prix_propose }} Ar</td>
+      <td class="mono">{{ o.score_calcule or '—' }}</td>
+      <td><span class="statut-pill statut-{{ o.statut|lower|replace('é','e') }}">{{ o.statut }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="field-hint">Vous n'avez pas encore soumis d'offre.</p>
+{% endif %}
+
+{% endblock %}
