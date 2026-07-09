@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Connexion — AgriMarketFlow AI{% endblock %}
+{% block content %}
+<h1 style="font-size:1.6rem;margin-bottom:24px;">Connexion</h1>
+<div class="form-card">
+  <form method="POST" action="{{ url_for('connexion') }}">
+    <label for="contact">Contact</label>
+    <input type="text" id="contact" name="contact" required autofocus>
+
+    <label for="mot_de_passe">Mot de passe</label>
+    <input type="password" id="mot_de_passe" name="mot_de_passe" required>
+
+    <button type="submit" class="btn btn-laterite" style="margin-top:20px;width:100%;">Se connecter</button>
+  </form>
+  <p class="field-hint" style="margin-top:16px;">
+    Comptes de démonstration (mot de passe : <span class="mono">password123</span>) :
+    rakoto@mail.mg (producteur), andria@mail.mg (collecteur), solo@mail.mg (transporteur).
+  </p>
+</div>
+{% endblock %}
