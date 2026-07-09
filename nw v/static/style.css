@@ -1,0 +1,370 @@
+/* AgriMarketFlow AI — identité visuelle
+   Palette : terre de latérite, vert forêt, or de récolte, papier de riz.
+   Inspirée des hautes terres agricoles de Madagascar : sols rouges, rizières, moissons. */
+
+:root {
+  --vert-foret: #1B3A2B;
+  --vert-moyen: #2F5233;
+  --laterite: #C1440E;
+  --or-recolte: #E0A32E;
+  --papier: #F6F2E9;
+  --papier-carte: #FFFDF8;
+  --encre: #232320;
+  --encre-douce: #5B5A52;
+  --ligne: #E2DCC9;
+  --succes: #2F6B3E;
+  --danger: #B4362A;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--papier);
+  color: var(--encre);
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 15.5px;
+  line-height: 1.5;
+}
+
+h1, h2, h3, .brand {
+  font-family: 'Fraunces', Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+.mono, .score-value, .coord {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ---------- Topbar ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--vert-foret);
+  color: var(--papier);
+  padding: 14px 32px;
+}
+
+.brand {
+  color: var(--papier);
+  text-decoration: none;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.brand-mark { color: var(--or-recolte); }
+.brand-accent { color: var(--or-recolte); }
+
+.topbar nav { display: flex; align-items: center; gap: 18px; }
+.topbar nav a {
+  color: var(--papier);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.92rem;
+  opacity: 0.9;
+}
+.topbar nav a:hover { opacity: 1; text-decoration: underline; }
+.nav-user { font-size: 0.85rem; opacity: 0.75; margin-left: 4px; }
+
+.btn-ghost {
+  border: 1px solid rgba(246,242,233,0.4);
+  padding: 6px 14px;
+  border-radius: 6px;
+}
+
+/* ---------- Layout ---------- */
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+  min-height: 70vh;
+}
+
+.footer {
+  text-align: center;
+  padding: 24px;
+  color: var(--encre-douce);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--ligne);
+}
+
+/* ---------- Flash messages ---------- */
+.flash-stack { margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px; }
+.flash {
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  border-left: 4px solid var(--vert-moyen);
+  background: #EEF3EA;
+}
+.flash-danger { border-color: var(--danger); background: #FBECE9; }
+.flash-warning { border-color: var(--or-recolte); background: #FCF3E1; }
+.flash-info { border-color: var(--vert-foret); background: #EAF0EC; }
+.flash-success { border-color: var(--succes); background: #E9F3EA; }
+
+/* ---------- Hero ---------- */
+.hero {
+  padding: 56px 0 40px;
+  border-bottom: 1px solid var(--ligne);
+  margin-bottom: 40px;
+}
+.hero .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  color: var(--laterite);
+  font-weight: 600;
+}
+.hero h1 {
+  font-size: 2.6rem;
+  margin: 10px 0 16px;
+  max-width: 620px;
+}
+.hero p { max-width: 560px; color: var(--encre-douce); font-size: 1.02rem; }
+
+.acteurs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 32px;
+}
+.acteur-card {
+  background: var(--papier-carte);
+  border: 1px solid var(--ligne);
+  border-radius: 10px;
+  padding: 20px;
+}
+.acteur-card .num { font-family: 'JetBrains Mono', monospace; color: var(--or-recolte); font-size: 0.8rem; }
+.acteur-card h3 { margin: 6px 0 8px; font-size: 1.1rem; }
+.acteur-card p { color: var(--encre-douce); font-size: 0.88rem; margin: 0; }
+
+.cta-row { margin-top: 32px; display: flex; gap: 12px; }
+
+/* ---------- Boutons ---------- */
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 6px;
+  background: var(--vert-foret);
+  color: var(--papier);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+}
+.btn:hover { background: var(--vert-moyen); }
+.btn-laterite { background: var(--laterite); }
+.btn-laterite:hover { background: #A83A0C; }
+.btn-outline {
+  background: transparent;
+  color: var(--vert-foret);
+  border: 1px solid var(--vert-foret);
+}
+
+/* ---------- Formulaires ---------- */
+.form-card {
+  background: var(--papier-carte);
+  border: 1px solid var(--ligne);
+  border-radius: 10px;
+  padding: 32px;
+  max-width: 480px;
+}
+label { display: block; font-size: 0.85rem; font-weight: 600; margin: 16px 0 6px; }
+label:first-child { margin-top: 0; }
+input, select, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--ligne);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: var(--papier);
+}
+textarea { resize: vertical; }
+input[type=file] {
+  padding: 8px;
+  font-size: 0.85rem;
+  background: var(--papier-carte);
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--or-recolte); outline-offset: 1px; }
+.field-hint { font-size: 0.78rem; color: var(--encre-douce); margin-top: 4px; }
+.form-row { display: flex; gap: 12px; }
+.form-row > * { flex: 1; }
+
+/* ---------- Cartes récolte / offre ---------- */
+.section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title h2 { margin: 0; font-size: 1.4rem; }
+.count-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  background: var(--vert-foret);
+  color: var(--papier);
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+.card-list { display: flex; flex-direction: column; gap: 12px; }
+
+.recolte-card, .offre-card, .suggestion-card {
+  background: var(--papier-carte);
+  border: 1px solid var(--ligne);
+  border-radius: 10px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.recolte-card .titre { font-weight: 600; font-size: 1.02rem; }
+.recolte-card .meta, .offre-card .meta { color: var(--encre-douce); font-size: 0.82rem; margin-top: 3px; }
+
+.statut-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.statut-en-attente { background: #FCF3E1; color: #8A6415; }
+.statut-en-cours { background: #E5EEF8; color: #2A5B8C; }
+.statut-cloturee { background: #E9F3EA; color: var(--succes); }
+.statut-acceptee { background: #E9F3EA; color: var(--succes); }
+.statut-refusee { background: #FBECE9; color: var(--danger); }
+
+/* Signature element: the "boussole de score" — a 3-bar breakdown for offer ranking */
+.score-block { display: flex; align-items: center; gap: 14px; min-width: 220px; }
+.score-value { font-size: 1.5rem; font-weight: 600; color: var(--vert-foret); }
+.score-value small { font-size: 0.65rem; color: var(--encre-douce); font-family: 'Inter'; display: block; }
+.score-bars { display: flex; flex-direction: column; gap: 4px; width: 130px; }
+.score-bar-row { display: flex; align-items: center; gap: 6px; }
+.score-bar-label { font-size: 0.62rem; width: 20px; color: var(--encre-douce); font-family: 'JetBrains Mono', monospace; }
+.score-bar-track { flex: 1; height: 5px; background: var(--ligne); border-radius: 3px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 3px; }
+.score-bar-fill.prix { background: var(--laterite); }
+.score-bar-fill.distance { background: var(--vert-moyen); }
+.score-bar-fill.dispo { background: var(--or-recolte); }
+
+.rank-badge {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--vert-foret);
+  color: var(--papier);
+  flex-shrink: 0;
+}
+.rank-badge.rank-1 { background: var(--laterite); }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--encre-douce);
+  border: 1px dashed var(--ligne);
+  border-radius: 10px;
+}
+
+.inline-form { display: flex; gap: 8px; align-items: center; }
+.inline-form input[type=number] { width: 110px; }
+
+table.offres-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+table.offres-table th, table.offres-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--ligne); font-size: 0.88rem; }
+table.offres-table th { color: var(--encre-douce); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.availability-toggle { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot.on { background: var(--succes); }
+.dot.off { background: var(--danger); }
+
+.card-thumb {
+  width: 52px; height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--ligne);
+}
+.card-thumb-empty {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--papier);
+  font-size: 1.3rem;
+}
+
+.media-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.media-thumb {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--ligne);
+  background: #000;
+}
+
+.leaflet-div-icon { background: transparent; border: none; }
+.map-pin {
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 3px rgba(0,0,0,0.45);
+}
+.map-pin-recolte { background: var(--laterite); width: 18px; height: 18px; }
+.map-pin-dispo { background: var(--vert-moyen); width: 14px; height: 14px; }
+.map-pin-indispo { background: var(--danger); width: 14px; height: 14px; }
+
+.diagnostic-box { margin-bottom: 20px; display: flex; align-items: center; }
+
+.ia-avis {
+  background: linear-gradient(135deg, #EFF6F1, #FBF3E4);
+  border: 1px solid var(--ligne);
+  border-left: 4px solid var(--or-recolte);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.ia-avis-label {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--vert-foret);
+  margin-bottom: 6px;
+}
+.ia-avis p { margin: 0; color: var(--encre); line-height: 1.55; }
+
+/* ---------- Cartes (Leaflet / OpenStreetMap) ---------- */
+.map-box {
+  width: 100%;
+  height: 320px;
+  border-radius: 10px;
+  border: 1px solid var(--ligne);
+  margin: 6px 0 6px;
+  background: var(--ligne);
+}
+.map-box.map-large { height: 420px; }
+.map-actions { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+.map-key-warning {
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: #FCF3E1;
+  color: #8A6415;
+  font-size: 0.82rem;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 720px) {
+  .acteurs-grid { grid-template-columns: 1fr; }
+  .topbar { flex-direction: column; gap: 10px; align-items: flex-start; }
+  .recolte-card, .offre-card { flex-direction: column; align-items: flex-start; }
+}

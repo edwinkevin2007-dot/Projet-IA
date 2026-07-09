@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Assistant IA — AgriMarketFlow AI{% endblock %}
+{% block content %}
+
+<div class="section-title">
+  <h2>Assistant IA — Mise en relation</h2>
+</div>
+<p class="field-hint" style="max-width:600px;margin-bottom:24px;">
+  L'agent analyse votre position et votre profil ({{ user.type_profil }}) pour vous suggérer
+  les meilleurs partenaires : disponibilité en priorité, puis proximité.
+</p>
+
+{% if not ia_disponible %}
+<div class="map-key-warning">
+  Assistant IA non configuré côté serveur (clé <span class="mono">GROQ_API_KEY</span> manquante) —
+  le classement ci-dessous reste calculé automatiquement, seul l'avis rédigé par l'IA est indisponible.
+</div>
+{% endif %}
+
+<div class="diagnostic-box" id="diagnostic-ia">
+  <button type="button" id="btn-diagnostic-ia" class="btn-outline" style="padding:5px 12px;font-size:0.78rem;border-radius:6px;">
+    🔧 Tester la connexion à l'IA
+  </button>
+  <span id="diagnostic-resultat" class="field-hint" style="margin-left:8px;"></span>
+</div>
+
+<div class="ia-panel">
+  {% if avis_ia %}
+    <div class="ia-avis">
+      <div class="ia-avis-label">🤖 Avis de l'agent IA</div>
+      <p>{{ avis_ia }}</p>
+    </div>
+  {% elif erreur_ia %}
+    <div class="flash flash-warning">{{ erreur_ia }}</div>
+  {% endif %}
+
+  {% if ia_disponible %}
+  <a href="{{ url_for('assistant_ia') }}?generer=1" class="btn btn-laterite" style="margin-bottom:28px;display:inline-block;">
+    ✨ {% if avis_ia %}Régénérer l'avis de l'agent{% else %}Demander l'avis de l'agent IA{% endif %}
+  </a>
+  {% endif %}
+</div>
+
+{% for role, liste in partenaires.items() %}
+<div class="section-title">
+  <h2 style="font-size:1.15rem;">Meilleur{{ 's' if liste|length > 1 else '' }} {{ role|lower }}{{ 's' if liste|length > 1 else '' }} pour vous</h2>
+  <span class="count-chip">{{ liste|length }}</span>
+</div>
+
+{% if liste %}
+<div class="card-list" style="margin-bottom:36px;">
+  {% for p in liste %}
+  <div class="suggestion-card">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="rank-badge {% if loop.index == 1 %}rank-1{% endif %}">{{ loop.index }}</div>
+      <div>
+        <div class="titre">{{ p.nom_complet }}</div>
+        <div class="meta">
+          {{ p.distance_km }} km ·
+          {% if p.est_disponible %}<span class="dot on"></span> disponible{% else %}<span class="dot off"></span> indisponible{% endif %}
+        </div>
+      </div>
+    </div>
+    {% if '@' in p.contact %}
+      <a href="mailto:{{ p.contact }}" class="btn btn-outline">Contacter par email</a>
+    {% else %}
+      <a href="tel:{{ p.contact }}" class="btn btn-outline">Contacter par téléphone</a>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" style="margin-bottom:36px;">Aucun {{ role|lower }} trouvé pour le moment.</div>
+{% endif %}
+{% endfor %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById("btn-diagnostic-ia")?.addEventListener("click", async () => {
+  const btn = document.getElementById("btn-diagnostic-ia");
+  const resultatEl = document.getElementById("diagnostic-resultat");
+  btn.disabled = true;
+  resultatEl.textContent = "Test en cours...";
+  resultatEl.style.color = "";
+
+  try {
+    const res = await fetch("{{ url_for('api_diagnostic_ia') }}");
+    const data = await res.json();
+    const messages = {
+      ok: `✅ Connexion OK — modèle ${data.modele}`,
+      absente: "⚠️ " + data.message,
+      invalide: "❌ " + data.message,
+      quota_depasse: "⏳ " + data.message,
+      erreur_reseau: "🌐 " + data.message,
+    };
+    resultatEl.textContent = messages[data.statut] || "Réponse inattendue.";
+  } catch (e) {
+    resultatEl.textContent = "Impossible de contacter le serveur.";
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+{% endblock %}
