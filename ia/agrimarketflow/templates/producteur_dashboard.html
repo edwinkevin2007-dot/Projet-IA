@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Mes récoltes — AgriMarketFlow AI{% endblock %}
+{% block content %}
+<div class="section-title">
+  <h2>Mes récoltes</h2>
+  <a href="{{ url_for('nouvelle_recolte') }}" class="btn btn-laterite">+ Publier une récolte</a>
+</div>
+
+{% if recoltes %}
+<div class="card-list">
+  {% for r in recoltes %}
+  <a href="{{ url_for('detail_recolte', recolte_id=r.id_recolte) }}" class="recolte-card" style="text-decoration:none;color:inherit;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      {% if r.vignette %}
+        <img src="{{ url_for('static', filename=r.vignette) }}" class="card-thumb" alt="">
+      {% else %}
+        <div class="card-thumb card-thumb-empty">🌾</div>
+      {% endif %}
+      <div>
+        <div class="titre">{{ r.libelle_produit }} — {{ r.quantite }} kg</div>
+        <div class="meta">Publiée le {{ r.date_publication }} · <span class="coord">{{ "%.4f"|format(r.latitude_origine) }}, {{ "%.4f"|format(r.longitude_origine) }}</span></div>
+      </div>
+    </div>
+    <span class="statut-pill statut-{{ r.statut|lower|replace('é','e')|replace(' ', '-') }}">{{ r.statut }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <p>Aucune récolte publiée pour le moment.</p>
+  <a href="{{ url_for('nouvelle_recolte') }}" class="btn btn-laterite" style="margin-top:12px;">Publier ma première récolte</a>
+</div>
+{% endif %}
+{% endblock %}

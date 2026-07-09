@@ -1,0 +1,147 @@
+# AgriMarketFlow AI — Prototype
+
+Implémentation du Cahier des Charges "AgriMarketFlow AI" (Sujet 7) : mise en relation
+producteurs / collecteurs / transporteurs à Madagascar, avec suggestion automatique de
+proximité et scoring multicritère (prix, distance, disponibilité).
+
+## Installation
+
+```bash
+python3 -m venv venv
+source venv/bin/activate        # Windows : venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+## Lancement
+
+```bash
+python3 app.py
+```
+
+L'application démarre sur **http://127.0.0.1:5000**. La base SQLite (`agrimarketflow.db`)
+est créée automatiquement au premier lancement, avec des comptes de démonstration :
+
+| Contact             | Rôle         | Mot de passe   |
+|----------------------|--------------|----------------|
+| rakoto@mail.mg        | Producteur   | password123    |
+| andria@mail.mg        | Collecteur   | password123    |
+| solo@mail.mg           | Transporteur | password123    |
+
+Pour repartir d'une base vide, supprimez simplement le fichier `agrimarketflow.db`.
+
+## Structure du projet
+
+```
+agrimarketflow/
+├── app.py            # Routes Flask, authentification, logique métier, uploads
+├── database.py        # Schéma SQLite (MLD) + connexion + données de démo
+├── scoring.py          # Distance Haversine + moteur de scoring multicritère
+├── ia.py                # Intégration API IA gratuite (Groq) pour la description produit
+├── requirements.txt
+├── templates/           # Vues Jinja2
+└── static/
+    ├── style.css          # Identité visuelle
+    ├── js/maps.js          # Sélecteur de position + carte de matching (Google Maps)
+    └── uploads/             # Photos/vidéos des récoltes (créé automatiquement)
+```
+
+## Fonctionnalités couvertes (section 3 du cahier des charges)
+
+- **Gestion des profils** : inscription / connexion pour les 3 types d'acteurs.
+- **Publication de récoltes** : formulaire produit / quantité / description / localisation,
+  avec upload de photos et vidéos du produit.
+- **Suggestion automatique (matching local)** : `scoring.prestataires_proches()` calcule
+  la distance Haversine entre la récolte et chaque prestataire, et retient ceux dans un
+  rayon de 100 km, triés par proximité.
+- **Gestion des offres** : les prestataires proposent un prix sur une récolte ; le producteur
+  les consulte.
+- **Comparaison et scoring** : `scoring.calculer_scores()` normalise prix, distance et
+  disponibilité, applique une moyenne pondérée (40 % / 40 % / 20 %, ajustable dans
+  `scoring.POIDS`) et classe les offres de la meilleure à la moins bonne.
+- **Validation et suivi** : la validation d'une offre par le producteur refuse les autres
+  offres, passe la récolte "En cours" et crée une `TRANSACTION`.
+- **Interface utilisateur** : interface web (Flask + Jinja2).
+
+## API REST
+
+- `GET /api/recoltes` — liste des récoltes publiées.
+- `GET /api/recolte/<id>/suggestions` — prestataires suggérés pour une récolte.
+
+## Modélisation
+
+Le schéma SQLite dans `database.py` reprend fidèlement le MLD du cahier des charges :
+`UTILISATEUR`, `RECOLTE`, `OFFRE`, `TRANSACTION`, avec les clés étrangères et contraintes
+`CHECK` correspondant aux énumérations (`type_profil`, `statut`, etc.).
+
+## Médias et description produit
+
+Chaque récolte peut désormais inclure :
+- une **description** libre (qualité, fraîcheur, conditions de récolte...) ;
+- des **photos** (JPG, PNG, GIF, WEBP) et des **vidéos** (MP4, WEBM, MOV), plusieurs fichiers
+  possibles, affichés en galerie sur la page de détail et en vignette sur les tableaux de bord.
+
+Les fichiers sont stockés dans `static/uploads/recoltes/<id_recolte>/` et référencés dans la
+table `RECOLTE_MEDIA`. Taille maximale par requête : 50 Mo (`MAX_CONTENT_LENGTH`, ajustable
+dans `app.py`).
+
+## Assistant IA (gratuit) pour la description produit
+
+Un bouton **"✨ Générer avec l'IA"** sur le formulaire de publication rédige automatiquement
+une description commerciale à partir du nom du produit et de la quantité, via l'API gratuite
+de [Groq](https://console.groq.com) (modèles Llama, inférence très rapide, aucune carte
+bancaire requise).
+
+### Configuration de la clé Groq
+
+1. Créez un compte gratuit sur [console.groq.com](https://console.groq.com) et générez une clé API.
+2. Définissez-la en variable d'environnement :
+
+```bash
+export GROQ_API_KEY="votre-cle-groq"
+python3 app.py
+```
+
+Sans clé configurée, le bouton est simplement désactivé et un message informe l'utilisateur
+que la description doit être rédigée manuellement — le reste de l'application n'est pas affecté.
+
+La logique d'appel est isolée dans `ia.py` (`generer_description()`), volontairement découplée
+du reste du code pour pouvoir être remplacée par un autre fournisseur gratuit
+(Hugging Face Inference API, Google Gemini free tier, etc.) sans toucher aux routes Flask.
+
+## Cartographie — API Google Maps
+
+L'application utilise l'API **Google Maps JavaScript** (au lieu de Folium/OpenStreetMap
+mentionné en piste technique) pour :
+
+- **Choisir une position** en cliquant sur la carte ou en glissant le repère, sur les pages
+  d'inscription et de publication de récolte (avec un bouton "Me localiser" via la géolocalisation
+  du navigateur) ;
+- **Visualiser la récolte et les prestataires suggérés** sur une carte, sur la page de détail
+  d'une récolte (marqueur rouge = récolte, marqueurs verts/rouges = prestataires disponibles/indisponibles,
+  avec distance et score au clic).
+
+### Configuration de la clé API
+
+1. Créez une clé sur [Google Cloud Console](https://console.cloud.google.com/google/maps-apis),
+   avec l'API **Maps JavaScript API** activée.
+2. Restreignez-la (référents HTTP) à votre domaine / `localhost` en développement.
+3. Définissez-la en variable d'environnement avant de lancer l'application :
+
+```bash
+export GOOGLE_MAPS_API_KEY="votre-cle-api"
+python3 app.py
+```
+
+Sans clé configurée, l'application reste pleinement fonctionnelle : les cartes sont simplement
+remplacées par un message d'avertissement, et les coordonnées se saisissent à la main dans les
+champs latitude/longitude.
+
+La logique des cartes est centralisée dans `static/js/maps.js` (`initPickerMap` pour la sélection
+de position, `initRecolteMap` pour la carte de matching).
+
+## Limites du prototype
+
+- Authentification simple par session Flask (à durcir pour une mise en production : CSRF,
+  HTTPS, limitation de tentatives, etc.).
+- La clé Google Maps est injectée côté client (normal pour l'API JS Maps) : pensez à la
+  restreindre par domaine/référent dans la console Google Cloud.

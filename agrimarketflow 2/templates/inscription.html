@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Créer un compte — AgriMarketFlow AI{% endblock %}
+{% block content %}
+<h1 style="font-size:1.6rem;margin-bottom:24px;">Créer un compte</h1>
+<div class="form-card">
+  <form method="POST" action="{{ url_for('inscription') }}">
+    <label for="type_profil">Vous êtes</label>
+    <select id="type_profil" name="type_profil" required>
+      <option value="Producteur">Producteur</option>
+      <option value="Collecteur">Collecteur</option>
+      <option value="Transporteur">Transporteur</option>
+    </select>
+
+    <label for="nom_complet">Nom complet</label>
+    <input type="text" id="nom_complet" name="nom_complet" required placeholder="Rakoto Jean">
+
+    <label for="contact">Contact (email ou téléphone)</label>
+    <input type="text" id="contact" name="contact" required placeholder="rakoto@mail.mg">
+
+    <label for="mot_de_passe">Mot de passe</label>
+    <input type="password" id="mot_de_passe" name="mot_de_passe" required minlength="6">
+
+    <label>Votre position</label>
+    <div class="map-actions"><button type="button" id="btn-locate-me" class="btn-outline" style="padding:4px 10px;font-size:0.78rem;border-radius:6px;">📍 Me localiser</button></div>
+    <div id="map-picker" class="map-box" data-lat-input="latitude" data-lon-input="longitude"></div>
+    <p class="field-hint">Cliquez sur la carte (OpenStreetMap) ou faites glisser le repère pour définir votre position. Utilisée pour le matching de proximité.</p>
+
+    <div class="form-row">
+      <div>
+        <label for="latitude">Latitude</label>
+        <input type="number" step="any" id="latitude" name="latitude" required value="-18.8792">
+      </div>
+      <div>
+        <label for="longitude">Longitude</label>
+        <input type="number" step="any" id="longitude" name="longitude" required value="47.5079">
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-laterite" style="margin-top:20px;width:100%;">Créer mon compte</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/maps.js') }}"></script>
+<script>initPickerMap();</script>
+{% endblock %}
