@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supprimer le compte</title>
+  <style>
+    :root{
+      --vert-foret:#1B3A2B;
+      --vert-moyen:#2F5233;
+      --laterite:#C1440E;
+      --or-recolte:#E0A32E;
+      --papier:#F6F2E9;
+      --papier-carte:#FFFDF8;
+      --encre:#232320;
+      --encre-douce:#5B5A52;
+      --ligne:#E2DCC9;
+      --succes:#2F6B3E;
+      --danger:#B4362A;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      background:var(--papier);
+      color:var(--encre);
+      font-family: Inter, -apple-system, sans-serif;
+      font-size:15.5px;
+      line-height:1.5;
+    }
+    h1,h2,h3,.brand{
+      font-family: Fraunces, Georgia, serif;
+      letter-spacing:-0.01em;
+    }
+
+    .page{
+      max-width:980px;
+      margin:0 auto;
+      padding:40px 24px 80px;
+      min-height:70vh;
+    }
+
+    /* Flash messages */
+    .flash-stack{margin-bottom:24px;display:flex;flex-direction:column;gap:8px;}
+    .flash{
+      padding:10px 16px;
+      border-radius:6px;
+      font-size:0.9rem;
+      border-left:4px solid var(--vert-moyen);
+      background:#EEF3EA;
+    }
+    .flash-danger{border-color:var(--danger);background:#FBECE9;}
+    .flash-warning{border-color:var(--or-recolte);background:#FCF3E1;}
+    .flash-info{border-color:var(--vert-foret);background:#EAF0EC;}
+    .flash-success{border-color:var(--succes);background:#E9F3EA;}
+
+    /* Hero */
+    .hero{
+      padding:22px 0 16px;
+      border-bottom:1px solid var(--ligne);
+      margin-bottom:24px;
+    }
+    .hero h1{
+      font-size:2.2rem;
+      margin:10px 0 8px;
+    }
+    .hero p{
+      margin:0;
+      color:var(--encre-douce);
+      font-size:1.02rem;
+    }
+
+    /* Form */
+    .form-card{
+      background:var(--papier-carte);
+      border:1px solid var(--ligne);
+      border-radius:10px;
+      padding:32px;
+      max-width:480px;
+    }
+    label{display:block;font-size:0.85rem;font-weight:600;margin:0 0 6px;}
+    input,select,textarea{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--ligne);
+      border-radius:6px;
+      font-family:inherit;
+      font-size:0.95rem;
+      background:var(--papier);
+    }
+    input:focus,select:focus,textarea:focus{
+      outline:2px solid var(--or-recolte);
+      outline-offset:1px;
+    }
+
+    /* Buttons */
+    .btn{
+      display:inline-block;
+      padding:10px 20px;
+      border-radius:6px;
+      background:var(--vert-foret);
+      color:var(--papier);
+      text-decoration:none;
+      font-weight:600;
+      font-size:0.9rem;
+      border:none;
+      cursor:pointer;
+      text-align:center;
+    }
+    .btn:hover{background:var(--vert-moyen);}
+    .btn-laterite{background:var(--laterite);}
+    .btn-laterite:hover{background:#A83A0C;}
+    .btn-outline{
+      background:transparent;
+      color:var(--vert-foret);
+      border:1px solid var(--vert-foret);
+    }
+
+    .cta-row{display:flex;gap:12px;align-items:center;margin-top:22px;flex-wrap:wrap;}
+    @media (max-width:720px){
+      .hero h1{font-size:2rem;}
+      .form-card{padding:24px;}
+      .page{padding:24px 16px 60px;}
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="hero">
+      <h1>Supprimer le compte</h1>
+      <p>Cette action est irréversible.</p>
+    </div>
+
+    <div class="form-card">
+      <form action="{{ url_for('supprimer_compte') }}" method="POST">
+        <label>Mot de passe</label>
+        <input type="password" name="password" required>
+
+        <div class="cta-row">
+          <button type="submit" class="btn btn-laterite"
+                  onclick="return confirm('Confirmer la suppression ?')">
+            Oui, supprimer
+          </button>
+          <a href="{{ url_for('accueil') }}" class="btn btn-outline">Annuler</a>
+        </div>
+      </form>
+    </div>
+  </main>
+</body>
+</html>
