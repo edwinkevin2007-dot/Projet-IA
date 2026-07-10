@@ -1,0 +1,5 @@
+flask
+folium
+requests
+scikit-learn
+tkintermapview
